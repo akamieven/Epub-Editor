@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محرر ومنظف ودامج ملفات TXT 📕</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Reset and Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f7f9fc; 
+            color: #1f2937; 
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex; 
+            padding: 20px;
+        }
+
+        /* الهيكل الرئيسي - Grid للشاشات الكبيرة */
+        .app-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: 280px 1fr; 
+            gap: 20px;
+            background-color: #ffffff;
+            border-radius: 18px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); 
+            padding: 30px;
+        }
+
+        /* الشريط الجانبي (Controls) */
+        .sidebar {
+            background-color: #ffffff;
+            padding-left: 10px;
+        }
+
+        h1 {
+            color: #111827; 
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* أقسام التحكم الفردية */
+        .control-group {
+            margin-bottom: 25px;
+            padding: 15px 10px;
+            border-radius: 10px;
+            background-color: #fcfcfd;
+            border: 1px solid #f3f4f6;
+            transition: box-shadow 0.3s;
+        }
+        .control-group:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        .control-group h3 {
+            font-size: 1em;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        /* المدخلات والأزرار */
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #4b5563;
+            font-size: 0.9em;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.9em;
+            background-color: #ffffff;
+            margin-bottom: 15px;
+        }
+        input[type="file"] { border: none; padding: 0; cursor: pointer; }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: white;
+            margin-top: 10px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        button:active { transform: scale(0.99); }
+
+        .action-btn { background-color: #3b82f6; }
+        .action-btn:hover { background-color: #2563eb; }
+        .delete-btn { background-color: #ef4444; }
+        .delete-btn:hover { background-color: #dc2626; }
+        #downloadButton { background-color: #10b981; margin-top: 25px; font-size: 1.05em; }
+        #downloadButton:hover { background-color: #059669; }
+        #applyOrderButton { background-color: #0087ff; }
+        #applyOrderButton:hover { background-color: #0073e6; }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        /* منطقة المحرر */
+        .editor-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            flex-grow: 1; 
+            min-height: 700px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            resize: vertical;
+            font-size: 15px;
+            direction: ltr; 
+            text-align: left;
+            background-color: #fcfcfd;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            border-color: #0087ff;
+            outline: none;
+        }
+
+        /* ======================================= */
+        /* ✨ تحسين مظهر شريط التمرير (النهائي) ✨ */
+        /* ======================================= */
+        
+        /* شريط التمرير (Chrome/Safari/Opera) */
+        textarea::-webkit-scrollbar {
+            width: 18px; /* زيادة كبيرة جدًا لسهولة الإمساك باللمس */
+        }
+
+        /* مقبض التمرير (Scrollbar Thumb) */
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #4b5563; /* رمادي داكن للمزيد من الوضوح */
+            border-radius: 9px; /* نصف عرض الشريط */
+            border: 5px solid #fcfcfd; /* حافة واسعة لزيادة حجم المقبض الفعلي */
+        }
+
+        textarea::-webkit-scrollbar-thumb:hover {
+            background-color: #1f2937; /* أغمق عند التفاعل */
+        }
+
+        /* مسار التمرير (Scrollbar Track) */
+        textarea::-webkit-scrollbar-track {
+            background: #e5e7eb; /* خلفية رمادية فاتحة للمسار لتمييزه */
+        }
+        
+        /* تصميم قائمة الملفات (لم يتغير) */
+        #fileList {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+            background-color: #ffffff; 
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .file-item {
+            padding: 10px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: grab; 
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #ffffff;
+            position: relative;
+            user-select: none; 
+            -webkit-user-select: none; 
+            touch-action: none; 
+        }
+        .file-item:last-child { border-bottom: none; }
+        .file-item.dragging {
+            opacity: 0.5;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); 
+            position: fixed; 
+            z-index: 1000;
+            width: 260px;
+        }
+        .file-item.over { background-color: #e5f1ff; }
+        .file-item span::before {
+            content: '☰'; 
+            margin-left: 10px;
+            color: #9ca3af; 
+            font-size: 1.2em;
+        }
+        
+        /* تصميم متجاوب (Media Query) */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .app-container { grid-template-columns: 1fr; gap: 15px; padding: 15px; }
+            .sidebar { padding: 0; }
+            h1 { text-align: center; font-size: 1.5em; margin-bottom: 20px; }
+            .editor-section { min-height: 400px; }
+            textarea { min-height: 400px; }
+            .control-group { padding: 12px; }
+            .file-item.dragging {
+                width: calc(100% - 20px); 
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="sidebar">
+            <h1>محرر ومنظف ودامج ملفات TXT📕</h1>
+
+            <div class="control-group">
+                <h3>📂 تحميل الملفات</h3>
+                <label for="fileInput">اختر ملف TXT واحد أو أكثر:</label>
+                <input type="file" id="fileInput" accept=".txt" multiple>
+            </div>
+            
+            <div class="control-group">
+                <h3>✨ ترتيب ملفات الدمج (السحب والإفلات)</h3>
+                
+                <ul id="fileList">
+                    <li class="file-item" style="text-align: center; color: #6b7280; cursor: default;">لا توجد ملفات مُحملة</li>
+                </ul>
+                
+                <button onclick="mergeAndDisplayFiles()" id="applyOrderButton">تطبيق الترتيب وعرض الدمج</button>
+            </div>
+
+            <div class="control-group">
+                <h3>🛠️ أدوات التنظيف</h3>
+                <button onclick="removePageNumbers()" class="action-btn">تنظيف ترقيم الصفحات (تلقائي)</button>
+                <button onclick="removeSoftLineBreaks()" class="action-btn"> إزالة فواصل الأسطر الزائدة (تلقائي)</button>
+            </div>
+
+            <div class="control-group">
+                <h3>🗑️ حذف الأسطر</h3>
+                <label for="searchWord">الكلمة المراد حذف سطرها:</label>
+                <input type="text" id="searchWord" placeholder="أدخل كلمة أو عبارة">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="deleteLineCheckbox" checked>
+                    <label for="deleteLineCheckbox">تفعيل حذف السطر بالكامل</label>
+                </div>
+                <button onclick="processText()" class="delete-btn">تطبيق حذف السطر</button>
+            </div>
+            
+            <button onclick="downloadModifiedText()" id="downloadButton">⬇️ تنزيل الملف المُعدَّل</button>
+
+        </div>
+        
+        <div class="editor-section">
+            <textarea id="fileContent" placeholder="المحتوى الذي تم تحميله ومعالجته سيظهر هنا..."></textarea>
+        </div>
+
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileContentTextarea = document.getElementById('fileContent');
+        const searchWordInput = document.getElementById('searchWord');
+        const deleteLineCheckbox = document.getElementById('deleteLineCheckbox');
+        const fileListElement = document.getElementById('fileList');
+
+        let originalFileName = 'merged_and_modified_text.txt'; 
+        let loadedFiles = []; 
+        let fileContents = {}; 
+        
+        let dragSrcEl = null; 
+        let touchSrcEl = null; 
+
+        // **********************************************
+        // *************** وظائف الترتيب (Mouse & Touch) ***************
+        // **********************************************
+        
+        function renumberListItems() {
+            const items = fileListElement.querySelectorAll('.file-item');
+            items.forEach((item, index) => {
+                const span = item.querySelector('span');
+                if (span) {
+                    const filename = item.getAttribute('data-filename');
+                    span.innerHTML = `<span>${index + 1}. ${filename}</span>`;
+                }
+            });
+        }
+
+        // --- وظائف الماوس (Mouse Events) ---
+
+        function handleDragStart(e) {
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => this.classList.add('dragging'), 0);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault(); 
+            e.dataTransfer.dropEffect = 'move';
+            if (this !== dragSrcEl) {
+                this.classList.add('over');
+            }
+            return false;
+        }
+        
+        function handleDragLeave() {
+            this.classList.remove('over');
+        }
+
+        function handleDrop(e) {
+            e.stopPropagation(); 
+            this.classList.remove('over'); 
+
+            if (dragSrcEl !== this) {
+                const parent = dragSrcEl.parentNode;
+                const targetRect = this.getBoundingClientRect();
+                const isDroppedBefore = e.clientY < (targetRect.top + targetRect.height / 2);
+                
+                if (isDroppedBefore) {
+                    parent.insertBefore(dragSrcEl, this);
+                } else {
+                    parent.insertBefore(dragSrcEl, this.nextSibling);
+                }
+                
+                renumberListItems();
+            }
+            return false;
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            fileListElement.querySelectorAll('.file-item').forEach(item => item.classList.remove('over'));
+        }
+
+        // --- وظائف اللمس (Touch Events) ---
+
+        function getTargetItem(y) {
+            const items = fileListElement.querySelectorAll('.file-item');
+            let closestItem = null;
+            let minDistance = Infinity;
+
+            items.forEach(item => {
+                if (item === touchSrcEl) return; 
+
+                const rect = item.getBoundingClientRect();
+                const distance = Math.abs(y - (rect.top + rect.height / 2));
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestItem = item;
+                }
+                item.classList.remove('over');
+            });
+            
+            if (closestItem) {
+                closestItem.classList.add('over');
+            }
+            return closestItem;
+        }
+
+        function handleTouchStart(e) {
+            if (e.touches.length !== 1) return;
+            
+            e.preventDefault(); 
+
+            touchSrcEl = this;
+            touchSrcEl.classList.add('dragging');
+            
+            const touch = e.touches[0];
+            const rect = touchSrcEl.getBoundingClientRect();
+            
+            touchSrcEl.startX = touch.clientX - rect.left;
+            touchSrcEl.startY = touch.clientY - rect.top;
+            
+            touchSrcEl.style.position = 'fixed';
+            touchSrcEl.style.top = `${touch.clientY - touchSrcEl.startY}px`;
+            touchSrcEl.style.left = `${touch.clientX - touchSrcEl.startX}px`;
+        }
+
+        function handleTouchMove(e) {
+            if (!touchSrcEl) return;
+            e.preventDefault(); 
+
+            const touch = e.touches[0];
+            
+            touchSrcEl.style.top = `${touch.clientY - touchSrcEl.startY}px`;
+            touchSrcEl.style.left = `${touch.clientX - touchSrcEl.startX}px`;
+            
+            const targetItem = getTargetItem(touch.clientY);
+        }
+
+        function handleTouchEnd(e) {
+            if (!touchSrcEl) return;
+
+            touchSrcEl.classList.remove('dragging');
+            touchSrcEl.style.position = '';
+            touchSrcEl.style.top = '';
+            touchSrcEl.style.left = '';
+            
+            const dropY = e.changedTouches[0].clientY;
+            const targetItem = getTargetItem(dropY);
+            
+            if (targetItem && targetItem !== touchSrcEl) {
+                const parent = touchSrcEl.parentNode;
+                const targetRect = targetItem.getBoundingClientRect();
+                const isDroppedBefore = dropY < (targetRect.top + targetRect.height / 2);
+
+                if (isDroppedBefore) {
+                    parent.insertBefore(touchSrcEl, targetItem);
+                } else {
+                    parent.insertBefore(touchSrcEl, targetItem.nextSibling);
+                }
+                
+                renumberListItems();
+            }
+            
+            fileListElement.querySelectorAll('.file-item').forEach(item => item.classList.remove('over'));
+            touchSrcEl = null;
+        }
+
+
+        // --- دالة إعداد المستمعين ---
+        function initDragAndDrop() {
+            const list = fileListElement;
+            
+            function addFileItemListeners() {
+                const items = list.querySelectorAll('.file-item');
+
+                items.forEach(item => {
+                    item.removeEventListener('dragstart', handleDragStart);
+                    item.removeEventListener('dragover', handleDragOver);
+                    item.removeEventListener('dragleave', handleDragLeave);
+                    item.removeEventListener('drop', handleDrop);
+                    item.removeEventListener('dragend', handleDragEnd);
+                    item.removeEventListener('touchstart', handleTouchStart);
+                    item.removeEventListener('touchmove', handleTouchMove);
+                    item.removeEventListener('touchend', handleTouchEnd);
+                });
+
+                items.forEach(item => {
+                    if (item.getAttribute('data-filename')) {
+                        // Mouse Events
+                        item.setAttribute('draggable', true);
+                        item.addEventListener('dragstart', handleDragStart);
+                        item.addEventListener('dragover', handleDragOver);
+                        item.addEventListener('dragleave', handleDragLeave);
+                        item.addEventListener('drop', handleDrop);
+                        item.addEventListener('dragend', handleDragEnd);
+                        
+                        // Touch Events (للهاتف)
+                        item.addEventListener('touchstart', handleTouchStart);
+                        item.addEventListener('touchmove', handleTouchMove);
+                        item.addEventListener('touchend', handleTouchEnd);
+                    }
+                });
+            }
+            
+            addFileItemListeners();
+        }
+
+        // **********************************************
+        // *************** وظائف التحميل والدمج ***************
+        // **********************************************
+        
+        function displayFileOrderList() {
+            fileListElement.innerHTML = '';
+            
+            if (loadedFiles.length === 0) {
+                 fileListElement.innerHTML = '<li class="file-item" style="text-align: center; color: #6b7280; cursor: default;">لا توجد ملفات مُحملة</li>';
+                 return;
+            }
+
+            loadedFiles.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                li.setAttribute('data-filename', file.name);
+                li.innerHTML = `<span>${index + 1}. ${file.name}</span>`; 
+                fileListElement.appendChild(li);
+            });
+
+            initDragAndDrop();
+        }
+
+        fileInput.addEventListener('change', function(event) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+            
+            loadedFiles = []; 
+            fileContents = {}; 
+
+            let filesToRead = files.length;
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    fileContents[file.name] = e.target.result;
+                    filesToRead--;
+                    
+                    if (filesToRead === 0) {
+                        loadedFiles = files;
+                        displayFileOrderList();
+                        mergeAndDisplayFiles(true);
+                        alert(`تم تحميل ${files.length} ملف بنجاح. يرجى ترتيبها بالسحب والإفلات في القائمة الجانبية.`);
+                    }
+                };
+                
+                reader.readAsText(file);
+            });
+            
+            if (files.length === 1) {
+                originalFileName = files[0].name;
+            } else {
+                 originalFileName = `${files[0].name.replace('.txt', '')}_MERGED.txt`;
+            }
+        });
+
+        
+        function mergeAndDisplayFiles(isInitialLoad = false) {
+            const orderedListItems = fileListElement.querySelectorAll('.file-item');
+            
+            if (orderedListItems.length === 0 || (orderedListItems.length === 1 && orderedListItems[0].getAttribute('data-filename') === null)) {
+                if (!isInitialLoad) alert("الرجاء تحميل الملفات أولاً.");
+                return;
+            }
+            
+            fileContentTextarea.value = '';
+            let mergedText = '';
+            let fileCount = 0;
+
+            orderedListItems.forEach(item => {
+                const fileName = item.getAttribute('data-filename');
+                if (fileName && fileContents[fileName]) {
+                    const fileSeparator = `\n\n=== START OF FILE: ${fileName} (Order: ${++fileCount}) ===\n\n`;
+                    mergedText += fileSeparator + fileContents[fileName];
+                }
+            });
+
+            fileContentTextarea.value = mergedText.trim();
+            if (!isInitialLoad) {
+                alert("✅ تم تطبيق الترتيب الجديد ودمج الملفات في منطقة المحرر.");
+            }
+        }
+
+
+        // **********************************************
+        // *************** وظائف المعالجة الأخرى ***************
+        // **********************************************
+        
+        function processText() {
+            const searchWord = searchWordInput.value.trim();
+            const deleteLine = deleteLineCheckbox.checked;
+            
+            if (!searchWord) {
+                alert("الرجاء إدخال كلمة للبحث عنها.");
+                return;
+            }
+
+            if (!deleteLine) {
+                 alert("الرجاء تفعيل خانة 'تفعيل حذف السطر بالكامل' لتنفيذ العملية المطلوبة.");
+                 return;
+            }
+
+            const originalText = fileContentTextarea.value;
+            const lines = originalText.split('\n');
+            let newLines = [];
+
+            const searchRegex = new RegExp(`${searchWord}`, 'i');
+            let linesDeletedCount = 0;
+
+            for (const line of lines) {
+                if (searchRegex.test(line)) {
+                    linesDeletedCount++;
+                } else {
+                    newLines.push(line);
+                }
+            }
+            
+            fileContentTextarea.value = newLines.join('\n');
+            alert(`✅ تمت معالجة النص بنجاح. تم حذف ${linesDeletedCount} سطر يحتوي على الكلمة "${searchWord}".`);
+        }
+        
+        // ج. دالة إزالة ترقيم الصفحات التلقائي (مُحدَّثة لدعم الأرقام العربية والإنجليزية)
+        function removePageNumbers() {
+            const contentTextarea = document.getElementById('fileContent');
+            let newText = contentTextarea.value;
+            let linesProcessed = 0;
+
+            // مجموعة الأرقام العربية (٠-٩) والإنجليزية (0-9)
+            const allDigits = '[0-9٠-٩]'; 
+
+            // النمط 1: أرقام مستقلة على سطر (مثل: 123 أو [١٢٣] أو - 5 -)
+            const pattern1 = new RegExp('^\\s*([\\[\\(\\-\\.]\\s*)?' + allDigits + '+(\\s*[\\)\\]\\-\\.]|\\s*)?\\s*$', 'gm');
+            
+            // النمط 2: أرقام في نهاية السطر
+            const pattern2 = new RegExp('(\\s+' + allDigits + '+\\s*)$', 'gm');
+            
+            // النمط 3: أرقام في بداية السطر
+            const pattern3 = new RegExp('(^\s*' + allDigits + '+\\s+)', 'gm');
+
+
+            let lines = newText.split('\n');
+            let cleanedLines = [];
+            
+            lines.forEach(line => {
+                if (line.trim().match(pattern1)) {
+                    linesProcessed++;
+                } else {
+                    cleanedLines.push(line);
+                }
+            });
+            
+            newText = cleanedLines.join('\n');
+
+            newText = newText.replace(pattern2, '');
+            newText = newText.replace(pattern3, '');
+
+            
+            fileContentTextarea.value = newText;
+            
+            alert(`✅ تمت إزالة ترقيم الصفحات التلقائي (عربي وإنجليزي). تم حذف حوالي ${linesProcessed} سطر بشكل كامل، وتنظيف الترقيم من بدايات ونهايات الأسطر المتبقية.`);
+        }
+        
+        function removeSoftLineBreaks() {
+            const contentTextarea = document.getElementById('fileContent');
+            let text = contentTextarea.value;
+
+            if (text.trim() === "") {
+                alert("لا يوجد محتوى لمعالجته.");
+                return;
+            }
+
+            const softBreakRegex = /([^.?!:؛،\/)\-]\s*)\n+/gm;
+            let newText = text.replace(softBreakRegex, '$1 ');
+            newText = newText.replace(/\s{2,}/g, ' ');
+
+            contentTextarea.value = newText;
+            
+            alert("✅ تم إزالة فواصل الأسطر الزائدة بنجاح ودمج الفقرات.");
+        }
+
+
+        function downloadModifiedText() {
+            const textToSave = fileContentTextarea.value;
+            
+            if (textToSave.trim() === "") {
+                alert("لا يوجد محتوى لتنزيله.");
+                return;
+            }
+
+            const blob = new Blob([textToSave], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            let downloadName = originalFileName;
+            
+            if (downloadName.toLowerCase().endsWith('.txt')) {
+                downloadName = downloadName.replace(/\.txt$/i, '_CLEANED.txt');
+            } else {
+                downloadName += '_CLEANED.txt';
+            }
+            
+            a.download = downloadName;
+
+            document.body.appendChild(a);
+            a.click();
+            
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert(`تم تنزيل الملف بنجاح باسم: ${a.download}`);
+        }
+    </script>
+
+</body>
+</html>
