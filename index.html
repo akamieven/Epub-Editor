@@ -395,7 +395,7 @@
 
             const metadataEl = opfDoc.getElementsByTagName("metadata")[0];
             const manifestEl = opfDoc.getElementsByTagName("manifest")[0];
-            const spineEl = opfDoc.getElementsByTagName("spine")[0]; // نحتاج هذا للعثور على صفحة الغلاف الداخلية
+            const spineEl = opfDoc.getElementsByTagName("spine")[0]; 
 
             if (!metadataEl || !manifestEl || !spineEl) {
                 throw new Error("ملف OPF تالف: مفقود عنصر metadata أو manifest أو spine.");
@@ -403,14 +403,11 @@
 
             // 2. تطبيق تعديلات الميتاداتا (العنوان، المؤلف، اللغة)
 
-            // دالة مساعدة لتعديل أو إضافة عنصر DC
             function updateOrCreateDcElement(tagName, newValue, attributes = {}) {
                 if (!newValue) return;
 
-                // البحث عن العنصر باستخدام مساحة الأسماء dc:
                 let element = opfDoc.querySelector(`dc\\:${tagName}`); 
 
-                // إذا لم يتم العثور عليه، نقوم بإنشائه
                 if (!element) {
                     element = opfDoc.createElementNS(dcNs, `dc:${tagName}`);
                     metadataEl.appendChild(element);
@@ -435,32 +432,42 @@
                 const coverExt = coverMime.split('/').pop() || 'jpeg';
                 const coverFileName = "new_cover." + coverExt;
 
-                // تحديد المسار داخل الـ EPUB
+                // تحديد مسار الغلاف الجديد داخل الـ EPUB
                 const imagesDir = opfDir ? opfDir + "/images/" : "images/";
                 const coverFullPath = imagesDir + coverFileName;
 
                 // --- البحث عن العناصر القديمة للحذف والتعديل ---
-                let oldCoverHref = null;
-                let oldCoverPageHref = null; 
+                let oldCoverHref = null; // رابط صورة الغلاف القديمة (للحذف)
+                let coverPageHref = null; // رابط صفحة الغلاف الداخلية XHTML (للتعديل)
 
-                // 3.1. تحديد الصورة القديمة (من properties="cover-image")
+                // 3.1. تحديد صورة الغلاف القديمة (من properties="cover-image")
                 const oldCoverItem = opfDoc.querySelector('item[properties~="cover-image"]');
                 if (oldCoverItem) {
                     oldCoverHref = oldCoverItem.getAttribute("href");
-                    oldCoverItem.remove(); // تم حذفه مبكراً لضمان النظافة
+                    oldCoverItem.remove(); // حذف عنصر item القديم
                 }
                 
-                // 3.2. تحديد صفحة الغلاف الداخلية (أول عنصر في <spine> غالبًا)
-                if (spineEl.firstElementChild) {
+                // 3.2. تحديد صفحة الغلاف الداخلية (الأكثر شمولية)
+                
+                // البحث 1: عن طريق ID (مثل 'cover-page' أو 'html-cover')
+                let coverPageItem = opfDoc.querySelector('item[id="cover-page"], item[id="html-cover"]');
+
+                // البحث 2: عن طريق الخاصية 'properties="nav"' (للتحقق من ملفات XHTML)
+                if (!coverPageItem) {
+                     coverPageItem = opfDoc.querySelector('item[properties~="nav"]');
+                }
+
+                // البحث 3: أول عنصر في الـ spine (الحل الأخير والأكثر شيوعاً)
+                if (!coverPageItem && spineEl.firstElementChild) {
                     const firstSpineItemId = spineEl.firstElementChild.getAttribute("idref");
                     const item = opfDoc.getElementById(firstSpineItemId);
-                    // إذا كان العنصر هو XHTML ويُعتقد أنه الغلاف (عبر ID أو النوع)
                     if (item && item.getAttribute("media-type").includes("xhtml")) {
-                        // يجب أن نتحقق ما إذا كانت صفحة الغلاف القديمة قابلة للإزالة من الـ spine 
-                        // إذا كانت لها خاصية `linear="no"` (وهو ما لا يمكننا التحقق منه هنا بسهولة)
-                        // ولكن سنفترض أنها أول صفحة محتوى تحتاج إلى تعديل
-                        oldCoverPageHref = item.getAttribute("href");
+                        coverPageItem = item;
                     }
+                }
+
+                if (coverPageItem) {
+                    coverPageHref = coverPageItem.getAttribute("href");
                 }
                 // --- نهاية البحث عن العناصر القديمة ---
 
@@ -468,13 +475,9 @@
                 // 3.3. إضافة ملف الغلاف الجديد إلى الـ ZIP
                 zip.file(coverFullPath, coverFile);
 
-                // 3.4. تنظيف OPF من إشارات الغلاف القديمة (تم في 3.1 جزئياً)
-                
-                // حذف meta القديم لـ cover (للتوافق القديم)
+                // 3.4. تنظيف OPF من إشارات الغلاف القديمة
                 let metaCover = opfDoc.querySelector('meta[name="cover"]');
                 if (metaCover) metaCover.remove();
-
-                // حذف عنصر الغلاف في <guide>
                 const guideEl = opfDoc.getElementsByTagName("guide")[0];
                 if (guideEl) {
                     const oldGuideItem = guideEl.querySelector('reference[type="cover"]');
@@ -503,39 +506,55 @@
                 if (oldCoverHref) {
                     const oldCoverFullPath = opfDir ? opfDir + '/' + oldCoverHref : oldCoverHref;
                     
-                    // محاولة حذف الملف من الـ ZIP
-                    // (التحقق من وجود الملف في الـ ZIP قبل حذفه لتجنب الأخطاء إذا لم يكن موجودًا)
                     if (epubData.file(oldCoverFullPath)) {
                         zip.remove(oldCoverFullPath); 
                     }
                 }
 
                 // 3.7. معالجة صفحة الغلاف الداخلية (XHTML/HTML)
-                if (oldCoverPageHref) {
-                    const fullPagePath = opfDir ? opfDir + '/' + oldCoverPageHref : oldCoverPageHref;
+                if (coverPageHref) {
+                    const fullPagePath = opfDir ? opfDir + '/' + coverPageHref : coverPageHref;
                     let pageContent = await zip.file(fullPagePath)?.async("text");
 
                     if (pageContent) {
                         try {
                             const pageDoc = parser.parseFromString(pageContent, "application/xhtml+xml");
+                            const relativeCoverPath = getRelativePath(fullPagePath, coverFullPath);
                             
-                            // (أ) العثور على عنصر الصورة (<img>) داخل صفحة الغلاف
+                            // 3.7.1. تعديل وسم <img> (الطريقة الشائعة)
                             const imgEl = pageDoc.querySelector('img'); 
-                            
                             if (imgEl) {
-                                // (ب) تعديل رابط الصورة للإشارة إلى الصورة الجديدة
-                                // يجب حساب المسار النسبي من صفحة الغلاف الداخلية إلى صورة الغلاف الجديدة!
-                                const relativeCoverPath = getRelativePath(fullPagePath, coverFullPath);
-                                
                                 imgEl.setAttribute('src', relativeCoverPath);
-                                // إضافة نمط لضمان عرضها بشكل صحيح كغلاف (اختياري)
                                 imgEl.setAttribute('style', 'max-width: 100%; height: auto; display: block; margin: 0 auto;');
-                                
-                                // (ج) حفظ محتوى صفحة الغلاف المُعدَّلة
-                                zip.file(fullPagePath, serializer.serializeToString(pageDoc));
                             }
+                            
+                            // 3.7.2. تعديل وسم <svg> (لتوافق EPUB3 مع Fixed-Layout)
+                            // يجب تحديد مساحة الاسم لـ xlink:href
+                            const imageEl = pageDoc.querySelector('image'); 
+                            if (imageEl && imageEl.hasAttribute('xlink:href')) {
+                                imageEl.setAttribute('xlink:href', relativeCoverPath);
+                            }
+
+                            // 3.7.3. البحث عن أي CSS داخلي في الصفحة (للتأكد من عدم وجود background-image)
+                            const styleEl = pageDoc.querySelector('style');
+                            if (styleEl && styleEl.textContent.includes('background-image')) {
+                                // استبدال مسارات الصور القديمة في الـ CSS
+                                const cssContent = styleEl.textContent;
+                                // البحث عن أي URL يشير لملف صورة (لنفترض أن القديم كان في نفس المجلد أو مجلدات قريبة)
+                                const newCssContent = cssContent.replace(/url\(['"]?(.+?)['"]?\)/gi, (match, p1) => {
+                                    if (p1.match(/\.(jpg|jpeg|png|gif)/i)) {
+                                        // هذا ليس مضمونًا لكنه محاولة قوية
+                                        return `url('${relativeCoverPath}')`;
+                                    }
+                                    return match;
+                                });
+                                styleEl.textContent = newCssContent;
+                            }
+                            
+                            // حفظ محتوى صفحة الغلاف المُعدَّلة
+                            zip.file(fullPagePath, serializer.serializeToString(pageDoc));
+                            
                         } catch(e) {
-                             // تجاهل الأخطاء في تحليل صفحة الغلاف الداخلية والاستمرار 
                              console.warn(`تحذير: فشل تحليل أو تعديل صفحة الغلاف الداخلية: ${e.message}`);
                         }
                     }
@@ -550,9 +569,17 @@
                 const mime = items[i].getAttribute("media-type");
                 const href = items[i].getAttribute("href");
                 if (mime === "application/xhtml+xml" || mime === "text/html") {
-                    xhtmlFiles.push(href);
+                    // استثناء صفحة الغلاف إذا تم تعديلها في الخطوة 3.7 (تجنب تكرار العمل)
+                    if (href !== coverPageHref) { 
+                        xhtmlFiles.push(href);
+                    }
                 }
             }
+            // إضافة صفحة الغلاف إلى قائمة الملفات العامة إذا لم يتم العثور عليها عبر البحث
+            if (coverPageHref && !xhtmlFiles.includes(coverPageHref)) {
+                 xhtmlFiles.push(coverPageHref);
+            }
+
 
             // 5. تجهيز الخط وتطبيق القواعد
             let fontName = fontSelection.name; 
@@ -588,7 +615,6 @@
 
                 if (!xhtmlContent) continue;
 
-                // يجب استخدام هذا لضمان التعامل الصحيح مع مساحات أسماء XHTML
                 const xhtmlDoc = parser.parseFromString(xhtmlContent, "application/xhtml+xml"); 
 
                 const htmlEl = xhtmlDoc.querySelector('html');
@@ -607,11 +633,9 @@
                     const align = textDirection === 'rtl' ? 'justify' : 'left';
                     bodyEl.setAttribute('dir', textDirection);
 
-                    // حذف أي نمط اتجاه قديم مدمج (للتنظيف)
                     const oldDirStyle = headEl.querySelector('style#dir_style');
                     if(oldDirStyle) oldDirStyle.remove();
 
-                    // إنشاء نمط الاتجاه باستخدام DOM
                     const styleDirEl = xhtmlDoc.createElement('style');
                     styleDirEl.setAttribute('type', 'text/css');
                     styleDirEl.setAttribute('id', 'dir_style');
@@ -621,19 +645,16 @@
 
                 // 6.2. تطبيق الخط
                 if (fontSelection.type !== 'none') {
-                    // حذف أي نمط خط قديم مدمج (للتنظيف)
                     const oldFontLink = headEl.querySelector('link#custom_font_link');
                     const oldFontStyle = headEl.querySelector('style#custom_font_style');
                     if(oldFontLink) oldFontLink.remove();
                     if(oldFontStyle) oldFontStyle.remove();
 
-                    // قواعد CSS لتطبيق الخط على العناصر
                     const cssRule = `*, body, p, div, span, h1, h2, h3, h4, h5, h6, a, li, blockquote, dd, dt { font-family: '${fontName}', sans-serif !important; line-height: 1.7 !important; }`;
 
                     if (fontSelection.type === 'local' || fontSelection.type === 'external') {
-                        // خط محلي/خارجي: حقن @font-face
                         const fontUrl = getRelativePath(fullXhtmlPath, fontFullPath);
-                        const fontFormat = fontMime.includes('woff') ? 'woff2' : 'truetype'; // تقدير مبسط
+                        const fontFormat = fontMime.includes('woff') ? 'woff2' : 'truetype'; 
                         const fontFaceRule = `@font-face { font-family: '${fontName}'; src: url('${fontUrl}') format('${fontFormat}'); font-weight: normal; font-style: normal; }`;
 
                         const styleEl = xhtmlDoc.createElement('style');
@@ -643,17 +664,14 @@
                         headEl.appendChild(styleEl);
 
                     } else if (fontSelection.type === 'google') {
-                        // خطوط Google Fonts: حقن <link> و <style>
                         const fontLinkUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;700&display=swap`;
 
-                        // حقن <link>
                         const linkEl = xhtmlDoc.createElement('link');
                         linkEl.setAttribute('rel', 'stylesheet');
                         linkEl.setAttribute('href', fontLinkUrl);
                         linkEl.setAttribute('id', 'custom_font_link');
                         headEl.appendChild(linkEl);
 
-                        // حقن <style>
                         const styleEl = xhtmlDoc.createElement('style');
                         styleEl.setAttribute('type', 'text/css');
                         styleEl.setAttribute('id', 'custom_font_style');
@@ -661,7 +679,6 @@
                         headEl.appendChild(styleEl);
                     }
 
-                    // تطبيق النمط المباشر على body
                     bodyEl.setAttribute('style', `font-family: '${fontName}', sans-serif !important;`);
                 }
 
