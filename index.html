@@ -6,11 +6,11 @@
     <title>محرر Epub 📚 Akami</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
-    
+
     <style>
         /* 1. تعريف خط واجهة المستخدم المطلوب (booksfont.ttf) */
         @font-face {
@@ -32,7 +32,7 @@
             align-items: center; 
             min-height: 100vh; 
         }
-        
+
         /* ... (بقية أنماط CSS كما هي) ... */
         .container { 
             background-color: var(--card); 
@@ -181,31 +181,31 @@
     </div>
     <div class="section">
         <label>5. إجبار الكتاب على استخدام خط (اختياري)</label>
-        
+
         <label for="preloadedFontSelect" style="font-weight: normal; font-size: 1rem;">اختر خطاً من القائمة:</label>
         <select id="preloadedFontSelect" onchange="handleFontSelection()">
             <option value="none" data-type="none">-- لا تغيير على الخطوط (افتراضي) --</option>
-            
+
             <option value="AmjadFont" data-type="local">خط الموقع المخصص للكتب (يُفضَّل)</option>
-            
+
             <option value="Cairo" data-type="google">خط القاهرة (Cairo)</option>
             <option value="Tajawal" data-type="google">خط تجوال (Tajawal)</option>
             <option value="Noto Naskh Arabic" data-type="google">خط نسخ جوجل (Noto Naskh Arabic)</option>
             <option value="Aref Ruqaa" data-type="google">خط الرقعة (Aref Ruqaa)</option>
-            
+
         </select>
         <p class="info" style="margin-top: 15px;">أو</p>
-        
+
         <label for="fontFile" style="font-weight: normal; font-size: 1rem;">اختر ملف خط خارجي (TTF/OTF/WOFF):</label>
         <input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2" onchange="handleFontSelection()">
-        
+
         <div id="fontPreviewContainer" style="margin-top: 15px; padding: 15px; border: 1px dashed #ccc; border-radius: 8px; text-align: center; display: none;">
             <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 10px;">معاينة الخط المُختار:</p>
             <p id="fontPreviewTextAr" style="font-size: 1.8rem; margin-bottom: 10px;">«عندما تلعب لُعبة العروش، إمَّا أن تربح أو تموت»</p>
             <p id="fontPreviewTextEn" style="font-size: 1.6rem; font-weight: normal;">“When you play the game of thrones, you win or you die. There is no middle ground.”</p>
         </div>
     </div>
-    
+
     <button id="processBtn" onclick="processEpub()">✅ تنفيذ التعديلات وتوليد الكتاب الجديد</button>
 
     <div id="statusMsg" class="status"></div>
@@ -228,7 +228,7 @@
             mime: 'font/ttf'
         }
     };
-    
+
     let fontSelection = {
         type: 'none', // 'none', 'google', 'local', 'external'
         name: null,   // اسم الخط لـ CSS
@@ -254,7 +254,7 @@
         for (let j = i; j < toParts.length; j++) { relativePath += toParts[j] + (j === toParts.length - 1 ? '' : '/'); }
         return relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
     }
-    
+
     function removeLiveFontStyle() {
         const oldStyle = document.getElementById('live-font-style');
         if (oldStyle) oldStyle.remove();
@@ -277,7 +277,7 @@
         const selectEl = document.getElementById('preloadedFontSelect');
         const fontFileEl = document.getElementById('fontFile');
         const externalFile = fontFileEl.files[0];
-        
+
         // 1. تحديد نوع الخط
         if (externalFile) {
             // أ) تم اختيار ملف خارجي
@@ -285,11 +285,11 @@
             fontSelection.type = 'external';
             fontSelection.name = 'ExternalCustomFont'; 
             fontSelection.file = externalFile;
-            
+
             // ... (منطق معاينة الخط الخارجي - يستخدم URL.createObjectURL) ...
             const fontUrl = URL.createObjectURL(externalFile);
             const fontName = fontSelection.name;
-            
+
             removeLiveFontStyle(); 
             const style = document.createElement('style');
             style.id = 'live-font-style';
@@ -309,19 +309,19 @@
         } else if (selectEl.value !== 'none') {
             // ب) تم اختيار خط من القائمة المنسدلة
             fontFileEl.value = ''; // إلغاء الملف الخارجي
-            
+
             const selectedOption = selectEl.options[selectEl.selectedIndex];
             const fontName = selectedOption.value;
             const fontType = selectedOption.getAttribute('data-type');
-            
+
             fontSelection.type = fontType;
             fontSelection.name = fontName;
             fontSelection.file = null; 
-            
+
             if (fontType === 'local') {
                 // ** تطبيق BooksFont للمعاينة فقط (الحل لنقطة 3) **
                 applyPreview('BooksFont'); 
-                
+
                 // تحميل الملف في الخلفية لضمان إضافته للـ EPUB
                 const info = LOCAL_FONT_INFO[fontName];
                 fetch(info.localPath)
@@ -357,10 +357,9 @@
 
     async function processEpub() {
         const epubInput = document.getElementById('epubFile');
-        // ... (تكرار البيانات المدخلة وتهيئة المتغيرات) ...
         const coverInput = document.getElementById('coverFile');
-        const titleInput = document.getElementById('bookTitle').value;
-        const authorInput = document.getElementById('bookAuthor').value;
+        const titleInput = document.getElementById('bookTitle').value.trim();
+        const authorInput = document.getElementById('bookAuthor').value.trim();
         const languageInput = document.getElementById('bookLanguage').value.trim().toLowerCase();
         const textDirection = document.querySelector('input[name="textDirection"]:checked').value; 
 
@@ -381,7 +380,7 @@
             const parser = new DOMParser();
             const serializer = new XMLSerializer();
 
-            // 1. تحديد المسارات الأساسية (نفس المنطق)
+            // 1. تحديد المسارات الأساسية 
             const containerXml = await epubData.file("META-INF/container.xml").async("text");
             const containerDoc = parser.parseFromString(containerXml, "application/xml");
             const rootfile = containerDoc.querySelector("rootfile");
@@ -392,10 +391,92 @@
             let opfContent = await epubData.file(opfPath).async("text");
             const opfDoc = parser.parseFromString(opfContent, "application/xml");
             const dcNs = "http://purl.org/dc/elements/1.1/";
+            const opfNs = "http://www.idpf.org/2007/opf";
             
-            // ... (تعديل الميتاداتا والغلاف - تم حذفهما للاختصار) ...
+            const metadataEl = opfDoc.getElementsByTagName("metadata")[0];
+            const manifestEl = opfDoc.getElementsByTagName("manifest")[0];
             
-            // 2. تجهيز قائمة ملفات المحتوى (CSS و XHTML) (نفس المنطق)
+            if (!metadataEl || !manifestEl) {
+                throw new Error("ملف OPF تالف: مفقود عنصر metadata أو manifest.");
+            }
+
+            // 2. تطبيق تعديلات الميتاداتا (العنوان، المؤلف، اللغة)
+
+            // دالة مساعدة لتعديل أو إضافة عنصر DC
+            function updateOrCreateDcElement(tagName, newValue, attributes = {}) {
+                if (!newValue) return;
+                
+                // البحث عن العنصر باستخدام مساحة الأسماء dc:
+                let element = opfDoc.querySelector(`dc\\:${tagName}`); 
+                
+                // إذا لم يتم العثور عليه، نقوم بإنشائه
+                if (!element) {
+                    element = opfDoc.createElementNS(dcNs, `dc:${tagName}`);
+                    metadataEl.appendChild(element);
+                }
+                
+                element.textContent = newValue;
+                for (const key in attributes) {
+                    element.setAttributeNS(opfNs, `opf:${key}`, attributes[key]);
+                }
+            }
+
+            updateOrCreateDcElement("title", titleInput);
+            updateOrCreateDcElement("creator", authorInput, { role: "aut" });
+            updateOrCreateDcElement("language", languageInput);
+
+
+            // 3. تطبيق تعديلات الغلاف
+
+            if (coverInput.files[0]) {
+                const coverFile = coverInput.files[0];
+                const coverMime = coverFile.type;
+                const coverExt = coverMime.split('/').pop() || 'jpeg';
+                const coverFileName = "new_cover." + coverExt;
+                
+                // تحديد المسار داخل الـ EPUB
+                const imagesDir = opfDir ? opfDir + "/images/" : "images/";
+                const coverFullPath = imagesDir + coverFileName;
+
+                // 3.1. إضافة ملف الغلاف الجديد إلى الـ ZIP
+                zip.file(coverFullPath, coverFile);
+                
+                // 3.2. تنظيف OPF من إشارات الغلاف القديمة
+                // حذف item القديم لـ cover-image
+                const oldCoverItem = opfDoc.querySelector('item[properties~="cover-image"]');
+                if (oldCoverItem) oldCoverItem.remove();
+                
+                // حذف meta القديم لـ cover (للتوافق القديم)
+                let metaCover = opfDoc.querySelector('meta[name="cover"]');
+                if (metaCover) metaCover.remove();
+                
+                // حذف عنصر الغلاف في <guide>
+                const guideEl = opfDoc.getElementsByTagName("guide")[0];
+                if (guideEl) {
+                    const oldGuideItem = guideEl.querySelector('reference[type="cover"]');
+                    if (oldGuideItem) oldGuideItem.remove();
+                }
+                
+                // 3.3. إضافة العناصر الجديدة للغلاف
+                
+                // إضافة العنصر الجديد لـ <manifest>
+                const newCoverItem = opfDoc.createElement("item");
+                newCoverItem.setAttribute("id", "new-cover-image");
+                newCoverItem.setAttribute("href", getRelativePath(opfPath, coverFullPath));
+                newCoverItem.setAttribute("media-type", coverMime);
+                // إضافة الخاصية property="cover-image" لجعله الغلاف الرسمي
+                newCoverItem.setAttribute('properties', 'cover-image'); 
+                manifestEl.appendChild(newCoverItem);
+
+                // إضافة meta cover (للتوافق القديم)
+                const newMetaCover = opfDoc.createElement("meta");
+                newMetaCover.setAttribute("name", "cover");
+                newMetaCover.setAttribute("content", "new-cover-image"); 
+                metadataEl.appendChild(newMetaCover);
+            }
+
+
+            // 4. تجهيز قائمة ملفات المحتوى (XHTML)
             let xhtmlFiles = [];
             const items = opfDoc.getElementsByTagName("item");
             for (let i = 0; i < items.length; i++) {
@@ -406,47 +487,50 @@
                 }
             }
 
-            // 3. تجهيز الخط وتطبيق القواعد
+            // 5. تجهيز الخط وتطبيق القواعد
             let fontName = fontSelection.name; 
             let fontFullPath = null;
-            
+            let fontMime = null;
+
             if (fontSelection.type === 'local' || fontSelection.type === 'external') { 
                 // أ) خط محلي/خارجي - يجب تضمين الملف
                 const fontFile = fontSelection.file;
                 if (!fontFile) throw new Error("خطأ: تعذر تحميل ملف الخط المحلي أو الخارجي.");
 
-                const fontFileName = "custom-font-" + fontName.replace(/[^a-zA-Z0-9]/g, '') + "." + fontFile.name.split('.').pop();
+                fontMime = fontFile.type || "font/opentype";
+                const fontExt = fontMime.includes('woff') ? fontMime.split('/').pop() : fontFile.name.split('.').pop();
+                const fontFileName = "custom-font-" + fontName.replace(/[^a-zA-Z0-9]/g, '') + "." + fontExt;
+                
                 const fontsDir = opfDir ? opfDir + "/fonts/" : "fonts/";
                 fontFullPath = fontsDir + fontFileName; 
 
                 zip.file(fontFullPath, fontFile); // إضافة ملف الخط إلى الـ ZIP
 
-                // إضافة الخط إلى OPF Manifest (نفس المنطق)
-                const manifest = opfDoc.getElementsByTagName("manifest")[0];
+                // إضافة الخط إلى OPF Manifest
                 const fontItem = opfDoc.createElement("item");
                 fontItem.setAttribute("id", `new-custom-font-${fontName.replace(/[^a-zA-Z0-9]/g, '')}`);
                 fontItem.setAttribute("href", getRelativePath(opfPath, fontFullPath));
-                fontItem.setAttribute("media-type", fontFile.type || "font/opentype");
-                manifest.appendChild(fontItem);
+                fontItem.setAttribute("media-type", fontMime);
+                manifestEl.appendChild(fontItem);
             }
-            
-            // 4. الحقن الآمن في ملفات XHTML (حل مشكلة XML)
+
+            // 6. الحقن الآمن في ملفات XHTML (تعديل الاتجاه والخطوط)
             for (let xhtmlHref of xhtmlFiles) {
                 const fullXhtmlPath = opfDir ? opfDir + '/' + xhtmlHref : xhtmlHref;
                 let xhtmlContent = await zip.file(fullXhtmlPath)?.async("text");
 
                 if (!xhtmlContent) continue;
-                
+
                 // يجب استخدام هذا لضمان التعامل الصحيح مع مساحات أسماء XHTML
                 const xhtmlDoc = parser.parseFromString(xhtmlContent, "application/xhtml+xml"); 
-                
+
                 const htmlEl = xhtmlDoc.querySelector('html');
                 const headEl = xhtmlDoc.querySelector('head');
                 const bodyEl = xhtmlDoc.querySelector('body');
-                
+
                 if (!headEl || !bodyEl) continue;
 
-                // 4.1. تطبيق اللغة والاتجاه (توحيد طريقة الحقن إلى DOM)
+                // 6.1. تطبيق اللغة والاتجاه
                 if (htmlEl && languageInput) {
                     htmlEl.setAttribute('lang', languageInput);
                     htmlEl.setAttribute('xml:lang', languageInput);
@@ -468,7 +552,7 @@
                     headEl.appendChild(styleDirEl);
                 }
 
-                // 4.2. تطبيق الخط (توحيد طريقة الحقن إلى DOM)
+                // 6.2. تطبيق الخط
                 if (fontSelection.type !== 'none') {
                     // حذف أي نمط خط قديم مدمج (للتنظيف)
                     const oldFontLink = headEl.querySelector('link#custom_font_link');
@@ -478,12 +562,13 @@
 
                     // قواعد CSS لتطبيق الخط على العناصر
                     const cssRule = `*, body, p, div, span, h1, h2, h3, h4, h5, h6, a, li, blockquote, dd, dt { font-family: '${fontName}', sans-serif !important; line-height: 1.7 !important; }`;
-                    
+
                     if (fontSelection.type === 'local' || fontSelection.type === 'external') {
                         // خط محلي/خارجي: حقن @font-face
                         const fontUrl = getRelativePath(fullXhtmlPath, fontFullPath);
-                        const fontFaceRule = `@font-face { font-family: '${fontName}'; src: url('${fontUrl}') format('opentype'), url('${fontUrl}') format('truetype'), url('${fontUrl}') format('woff'), url('${fontUrl}') format('woff2'); font-weight: normal; font-style: normal; }`;
-                        
+                        const fontFormat = fontMime.includes('woff') ? 'woff2' : 'truetype'; // تقدير مبسط
+                        const fontFaceRule = `@font-face { font-family: '${fontName}'; src: url('${fontUrl}') format('${fontFormat}'); font-weight: normal; font-style: normal; }`;
+
                         const styleEl = xhtmlDoc.createElement('style');
                         styleEl.setAttribute('type', 'text/css');
                         styleEl.setAttribute('id', 'custom_font_style');
@@ -493,7 +578,7 @@
                     } else if (fontSelection.type === 'google') {
                         // خطوط Google Fonts: حقن <link> و <style>
                         const fontLinkUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;700&display=swap`;
-                        
+
                         // حقن <link>
                         const linkEl = xhtmlDoc.createElement('link');
                         linkEl.setAttribute('rel', 'stylesheet');
@@ -508,33 +593,33 @@
                         styleEl.textContent = cssRule;
                         headEl.appendChild(styleEl);
                     }
-                    
+
                     // تطبيق النمط المباشر على body
                     bodyEl.setAttribute('style', `font-family: '${fontName}', sans-serif !important;`);
                 }
 
-                // 4.3. حفظ محتوى XHTML
+                // 6.3. حفظ محتوى XHTML
                 zip.file(fullXhtmlPath, serializer.serializeToString(xhtmlDoc));
             }
 
-            // 5. حفظ ملف OPF النهائي (نفس المنطق)
+            // 7. حفظ ملف OPF النهائي
             const newOpfContent = serializer.serializeToString(opfDoc);
             zip.file(opfPath, newOpfContent);
 
-            // 6. إنشاء الملف وتحميله 
+            // 8. إنشاء الملف وتحميله 
             const content = await zip.generateAsync({
                 type:"blob",
                 mimeType: "application/epub+zip"
             });
 
-            let finalFileName = originalFileName.replace(/\.(epub|zip|rar|tar)$/gi, '') + '.epub';
+            let finalFileName = originalFileName.replace(/\.(epub|zip|rar|tar)$/gi, '') + '_edited.epub';
             saveAs(content, finalFileName);
 
             showStatus('تم بنجاح! ✅ اكتمل التحرير وبدأ تحميل الكتاب.', 'success');
 
         } catch (e) {
             console.error(e);
-            showStatus(`حدث خطأ فادح أثناء المعالجة: ${e.message}. يرجى محاولة استخدام خيار 'اختر ملف خط خارجي' إذا استمر الخطأ.`, 'error');
+            showStatus(`حدث خطأ فادح أثناء المعالجة: ${e.message}. يرجى التحقق من تنسيق ملف EPUB.`, 'error');
 
         } finally {
             // إعادة تفعيل الزر
@@ -542,7 +627,7 @@
             btn.disabled = false;
         }
     }
-    
+
     document.addEventListener('DOMContentLoaded', handleFontSelection);
 </script>
 
